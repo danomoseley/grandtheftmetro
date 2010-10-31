@@ -20,7 +20,7 @@ class MainPage(webapp.RequestHandler):
             url_linktext = 'Logout'
         else:
             url = users.create_login_url(self.request.uri)
-            url_linktext = 'Login with your Google Account'
+            url_linktext = 'Login test with your Google Account'
 
         template_values = {
             'url': url,
@@ -37,7 +37,7 @@ class Guestbook(webapp.RequestHandler):
             greeting.author = users.get_current_user()
         greeting.content = self.request.get('content')
         greeting.put()
-        self.redirect('/')
+        self.response.out.write("test")
 
 application = webapp.WSGIApplication(
                                     [('/',MainPage),
