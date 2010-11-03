@@ -16,5 +16,6 @@
 <path>${GOOGLE_APP_ENGINE}/lib/django</path>
 <path>${GOOGLE_APP_ENGINE}/lib/webob</path>
 <path>${GOOGLE_APP_ENGINE}/lib/yaml/lib</path>
+<path>C:\Users\Dan-o\workspace\grandtheftmetro\geomodel-0.2.0-py2.5.egg</path>
 </pydev_pathproperty>
 </pydev_project>
