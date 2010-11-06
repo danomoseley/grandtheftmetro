@@ -8,7 +8,6 @@
         </script>
         <script type='text/javascript'>
             var ge;
-
             google.load("earth", "1");
             var mplat = 61.2;
             var previous_data = {};
@@ -22,7 +21,6 @@
             var animRunning = false;
             var timeout = 60;
             var ANIM_ALTITUDE = 5;
-
             var TURN_DEGREES = 2;
             var WALK_SPEED = 1;
 
@@ -37,21 +35,9 @@
 
             var me = {
                 changed: false,
-                heading: {
-                    {
-                        start_heading
-                    }
-                },
-                lat: {
-                    {
-                        start_lat
-                    }
-                },
-                lon: {
-                    {
-                        start_lon
-                    }
-                },
+                heading: {{start_heading}},
+                lat: {{start_lat}},
+                lon: {{start_lon}},
                 sess: "{{ session }}",
                 move: function(x, y, h) {
                     lat: x;
