@@ -12,3 +12,6 @@ handlers:
 
 - url: /.*
   script: helloworld.py
+  
+builtins:
+- datastore_admin: on

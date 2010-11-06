@@ -21,12 +21,25 @@ class User(db.Model):
     session = db.StringProperty('single-line')
     lat = db.FloatProperty()
     lon = db.FloatProperty()
+    heading = db.IntegerProperty()
     @staticmethod
     def public_attributes():
         """Returns a set of simple attributes on public school entities."""
         return [
             'username', 'session'
         ]
+        
+           
+    def _get_heading(self):
+        return self.location.lat if self.location else None
+
+    def _set_heading(self, heading):
+        if not self.location:
+          self.location = db.GeoPt()
+
+          self.location.heading = heading
+
+    heading1 = property(_get_heading, _set_heading)  
 
     def _get_latitude(self):
         return self.location.lat if self.location else None
@@ -55,9 +68,8 @@ def _merge_dicts(*args):
   return reduce(lambda d, s: d.update(s) or d, args)
 
 class MainPage(webapp.RequestHandler):
-    def get(self):
-
-        current_user = User(lat=40.745193,lon=-73.903926)
+    def get(self): 
+        current_user = User(lat=40.745193,lon=-73.903926, heading=0)
         if users.get_current_user():
             current_user.username = users.get_current_user()
         current_user.put()
@@ -73,6 +85,7 @@ class play(webapp.RequestHandler):
         'session': self.request.get('s'),
         'start_lat':current_user.lat,
         'start_lon':current_user.lon,
+        'start_heading':current_user.heading,
         }
 
         path = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -80,7 +93,7 @@ class play(webapp.RequestHandler):
 
 class Guestbook(webapp.RequestHandler):
     def post(self):
-        current_user = User(lat=40.745193,lon=73.903926)
+        current_user = User(lat=40.745193,lon=73.903926, heading=0)
         if users.get_current_user():
             current_user.username = users.get_current_user()
         current_user.put()
@@ -92,6 +105,7 @@ class update(webapp.RequestHandler):
             current_user = db.get(self.request.get('session'))   
             current_user.lat = float(self.request.get('lat'))
             current_user.lon = float(self.request.get('lon'))
+            current_user.heading = int(self.request.get('heading'))
             current_user.put()
          
         results = User.all()
@@ -101,6 +115,7 @@ class update(webapp.RequestHandler):
           _merge_dicts({
             'lat': result.lat,
             'lon': result.lon,
+            'heading': result.heading,
             },
             dict([(attr, getattr(result, attr))
                   for attr in public_attrs]))
