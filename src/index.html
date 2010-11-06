@@ -1,307 +1,308 @@
 <html>
-<head>
-    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
-    <script type="text/javascript" src="/js/jquery-1.4.3.min.js"></script>
-    <script type="text/javascript" src="http://www.google.com/jsapi?key=ABQIAAAAIKQG3lTVGFS3EZyE-MLGaRREwtvvtNaMRh6XxsrEhNJYgMerAxS_tphRXpLQDpaaV0o2vOjhv15piA"></script>
-    <script type='text/javascript'>
-		
- 		var ge;
-		
-		google.load("earth", "1");
-		var mplat = 61.2;
-		var previous_data = {};
-		var inactive_timer = 0;
-		var timer_active = 0;
-		var inactive_timeout;
-		var bRightKeyDown = false;
-		var bLeftKeyDown = false;
-		var bUpKeyDown = false;
-		var bDownKeyDown = false;
-		var animRunning = false;
-		var timeout = 60; 
-		var ANIM_ALTITUDE = 5;
-		
-		var TURN_DEGREES = 2;
-		var WALK_SPEED = 1;
-				
-		function failureCallback(object) {
-        }
-        
-		function timer(){
-			if(timer_active){
-				inactive_timer = inactive_timer+1;
-				setTimeout(timer,1000);	
-			}				
-		}		
-		
-		var me = {
-			changed: false,
-			heading: {{ start_heading }},
-			lat: {{ start_lat }},
-			lon: {{ start_lon }},
-			sess: "{{ session }}",
-			move: function(x, y, h){
-				lat:x;
-				lon: y;
-				heading: h;
-			},
-			strafe: function(direction){
-				if(direction=="right"){
-					alert("right");
-				}else if(direction=="left"){
-					alert("left");
-				}
-			}	
-		}
-		function server_update(){
-			if(me.changed){
-				timer_active = 0;
-				inactive_timer = 0;
-				me.changed = false;
-				$.ajax({
-					      url: "/update",
-					      type: "POST",
-					      data: ({ lat : me.lat, lon : me.lon, session : me.sess }),
-					      dataType: "json",
-					      success: function(data){
-					      	alert(data.users[0].username);
-							setTimeout(server_update,250);	
-					      }
-					   }
-					)
-			}else{
-				if(timer_active==0){
-					timer_active = 1;
-					inactive_timer = 0;
-					timer();
-				}				
-				$.ajax({
-					      url: "/update",
-					      type: "POST",
-					      data: ({ session : me.sess }),
-					      dataType: "json",
-					      success: function(data){
-					         if(inactive_timer>timeout*1000){
-					         	inactive_timeout = setTimeout(server_update,1000);				         
-					         }else{
-					         	// If there are no users around, slow down the updates
-					      	 	if(data.users.length<2){
-					      	 		setTimeout(server_update,500);	
-					      	 	}else{
-					      	 		server_update();
-					      	 	}
-					         }
-					      	 							 
-					      }
-					   }
-					)
-			}	
-		}
-		
-		function initCallback(object) {
-            ge = object;
-            ge.getWindow().setVisibility(true);
-
-            ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
- 			ge.getOptions().setMouseNavigationEnabled(false); 
-  
-  
-  
-  var initCam = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);		
-  initCam.setAltitude(ANIM_ALTITUDE);
-  initCam.setLatitude( 40.759);
-  initCam.setLongitude( -73.9849);
-  initCam.setHeading(0); 
-		
-initCam.setTilt(80);
-initCam.setRoll(0);
-
-  ge.getView().setAbstractView(initCam);
-        }
-        
-        function startAnimation() {
-  if (!animRunning) {
-    ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
-    animRunning = true;
-    google.earth.addEventListener(ge, 'frameend', tickAnimation);
     
-    // start it off
-    tickAnimation();
-  }
-}
+    <head>
+        <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+        <script type="text/javascript" src="/js/jquery-1.4.3.min.js">
+        </script>
+        <script type="text/javascript" src="http://www.google.com/jsapi?key=ABQIAAAAIKQG3lTVGFS3EZyE-MLGaRREwtvvtNaMRh6XxsrEhNJYgMerAxS_tphRXpLQDpaaV0o2vOjhv15piA">
+        </script>
+        <script type='text/javascript'>
+            var ge;
 
-function stopAnimation() {
-  if (animRunning) {
-    google.earth.removeEventListener(ge, 'frameend', tickAnimation);
-    animRunning = false;
-  }
-}
+            google.load("earth", "1");
+            var mplat = 61.2;
+            var previous_data = {};
+            var inactive_timer = 0;
+            var timer_active = 0;
+            var inactive_timeout;
+            var bRightKeyDown = false;
+            var bLeftKeyDown = false;
+            var bUpKeyDown = false;
+            var bDownKeyDown = false;
+            var animRunning = false;
+            var timeout = 60;
+            var ANIM_ALTITUDE = 5;
 
-function tickAnimation() {
-  // an example of some camera manipulation that's possible w/ the Earth API
-  var camera = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);
-  var dist = WALK_SPEED;
-  
-  if (bRightKeyDown)
-  {
-  		if (bDownKeyDown) {
-  			me.heading  = me.heading - TURN_DEGREES;
-  		}
-  		else
-  		{ 
-  			me.heading  = me.heading + TURN_DEGREES;
-  		} 
-  		
-  	    
-					if (!bDownKeyDown && !bUpKeyDown)
-					{ 
-					dist=0;
-					}
-  }
-  
-  if (bLeftKeyDown)
-  {
-  		if (bDownKeyDown) {
-  			me.heading  = me.heading + TURN_DEGREES;
-  		}
-  		else
-  		{ 
-  			me.heading  = me.heading - TURN_DEGREES;
-  		} 
-  		
-					if (!bDownKeyDown && !bUpKeyDown)
-					{ 
-					dist=0;
-					}
-  }
-  
-  if (bDownKeyDown)
-  {
-  		dist = 0-dist;
-  } 
-  
-  var dest = destination(camera.getLatitude(), camera.getLongitude(), dist,
-                         me.heading );
+            var TURN_DEGREES = 2;
+            var WALK_SPEED = 1;
 
-  
-  me.move(dest[0], dest[1], me.heading);
+            function failureCallback(object) {}
 
-  camera.setAltitude(ANIM_ALTITUDE);
-  camera.setLatitude(dest[0]);
-  camera.setLongitude(dest[1]);
-  camera.setHeading(me.heading); 
-  
-camera.setTilt(80);
-camera.setRoll(0);
+            function timer() {
+                if (timer_active) {
+                    inactive_timer = inactive_timer + 1;
+                    setTimeout(timer, 1000);
+                }
+            }
 
-  ge.getView().setAbstractView(camera);
-}
+            var me = {
+                changed: false,
+                heading: {
+                    {
+                        start_heading
+                    }
+                },
+                lat: {
+                    {
+                        start_lat
+                    }
+                },
+                lon: {
+                    {
+                        start_lon
+                    }
+                },
+                sess: "{{ session }}",
+                move: function(x, y, h) {
+                    lat: x;
+                    lon: y;
+                    heading: h;
+                },
+                strafe: function(direction) {
+                    if (direction == "right") {
+                        alert("right");
+                    } else if (direction == "left") {
+                        alert("left");
+                    }
+                }
+            }
+
+            function server_update() {
+                if (me.changed) {
+                    timer_active = 0;
+                    inactive_timer = 0;
+                    me.changed = false;
+                    $.ajax({
+                        url: "/update",
+                        type: "POST",
+                        data: ({
+                            lat: me.lat,
+                            lon: me.lon,
+                            heading: me.heading,
+                            session: me.sess
+                        }),
+                        dataType: "json",
+                        success: function(data) {
+                            alert(data.users[0].username);
+                            setTimeout(server_update, 250);
+                        }
+                    })
+                } else {
+                    if (timer_active == 0) {
+                        timer_active = 1;
+                        inactive_timer = 0;
+                        timer();
+                    }
+                    $.ajax({
+                        url: "/update",
+                        type: "POST",
+                        data: ({
+                            session: me.sess
+                        }),
+                        dataType: "json",
+                        success: function(data) {
+                            if (inactive_timer > timeout * 1000) {
+                                inactive_timeout = setTimeout(server_update, 1000);
+                            } else {
+                                // If there are no users around, slow down the updates
+                                if (data.users.length < 2) {
+                                    setTimeout(server_update, 500);
+                                } else {
+                                    server_update();
+                                }
+                            }
+
+                        }
+                    })
+                }
+            }
+
+            function initCallback(object) {
+                ge = object;
+                ge.getWindow().setVisibility(true);
+
+                ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
+                ge.getOptions().setMouseNavigationEnabled(false);
+
+
+
+                var initCam = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);
+                initCam.setAltitude(ANIM_ALTITUDE);
+                initCam.setLatitude(40.759);
+                initCam.setLongitude(-73.9849);
+                initCam.setHeading(0);
+
+                initCam.setTilt(80);
+                initCam.setRoll(0);
+
+                ge.getView().setAbstractView(initCam);
+            }
+
+            function startAnimation() {
+                if (!animRunning) {
+                    ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
+                    animRunning = true;
+                    google.earth.addEventListener(ge, 'frameend', tickAnimation);
+
+                    // start it off
+                    tickAnimation();
+                }
+            }
+
+            function stopAnimation() {
+                if (animRunning) {
+                    google.earth.removeEventListener(ge, 'frameend', tickAnimation);
+                    animRunning = false;
+                }
+            }
+
+            function tickAnimation() {
+                // an example of some camera manipulation that's possible w/ the Earth API
+                var camera = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);
+                var dist = WALK_SPEED;
+
+                if (bRightKeyDown) {
+                    if (bDownKeyDown) {
+                        me.heading = me.heading - TURN_DEGREES;
+                    }
+                    else {
+                        me.heading = me.heading + TURN_DEGREES;
+                    }
+
+
+                    if (!bDownKeyDown && !bUpKeyDown) {
+                        dist = 0;
+                    }
+                }
+
+                if (bLeftKeyDown) {
+                    if (bDownKeyDown) {
+                        me.heading = me.heading + TURN_DEGREES;
+                    }
+                    else {
+                        me.heading = me.heading - TURN_DEGREES;
+                    }
+
+                    if (!bDownKeyDown && !bUpKeyDown) {
+                        dist = 0;
+                    }
+                }
+
+                if (bDownKeyDown) {
+                    dist = 0 - dist;
+                }
+
+                var dest = destination(camera.getLatitude(), camera.getLongitude(), dist, me.heading);
+
+
+                me.move(dest[0], dest[1], me.heading);
+
+                camera.setAltitude(ANIM_ALTITUDE);
+                camera.setLatitude(dest[0]);
+                camera.setLongitude(dest[1]);
+                camera.setHeading(me.heading);
+
+                camera.setTilt(80);
+                camera.setRoll(0);
+
+                ge.getView().setAbstractView(camera);
+            }
 
 /* Helper functions, courtesy of
    http://www.movable-type.co.uk/scripts/latlong.html */
-function distance(lat1, lng1, lat2, lng2) {
-  var a = Math.sin(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180);
-  var b = Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.cos((lng2 - lng1) * Math.PI / 180);
-  return 6371000 * Math.acos(a + b);
-}
 
-function fix360(x)
-{
-	if (x > 360)
-	{
-	  return[x-360];
-	}
-	if (x < 0)
-	{
-	  return[x+360];
-	}
-	else return[x];
+            function distance(lat1, lng1, lat2, lng2) {
+                var a = Math.sin(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180);
+                var b = Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lng2 - lng1) * Math.PI / 180);
+                return 6371000 * Math.acos(a + b);
+            }
 
-}
+            function fix360(x) {
+                if (x > 360) {
+                    return [x - 360];
+                }
+                if (x < 0) {
+                    return [x + 360];
+                }
+                else return [x];
+
+            }
 
 
-function destination(lat, lng, dist, heading) {
-  lat *= Math.PI / 180;
-  lng *= Math.PI / 180;
-  heading *= Math.PI / 180;
-  dist /= 6371000; // angular dist
-  
-  var lat2 = Math.asin(Math.sin(lat) * Math.cos(dist) + 
-                       Math.cos(lat) * Math.sin(dist) * Math.cos(heading));
+            function destination(lat, lng, dist, heading) {
+                lat *= Math.PI / 180;
+                lng *= Math.PI / 180;
+                heading *= Math.PI / 180;
+                dist /= 6371000; // angular dist
+                var lat2 = Math.asin(Math.sin(lat) * Math.cos(dist) + Math.cos(lat) * Math.sin(dist) * Math.cos(heading));
 
-  return [
-      180 / Math.PI * lat2,
-      180 / Math.PI *
-        (lng + Math.atan2(Math.sin(heading) * Math.sin(dist) * Math.cos(lat2),
-                          Math.cos(dist) - Math.sin(lat) * Math.sin(lat2)))];
-}
-       
-        function foo(event,state){
-        	if(event.keyCode == '87' || event.keyCode =='38'){ //UP & W
-					bUpKeyDown = state;
-					if (state) { 
-					startAnimation();
-					}
-					else
-					{
-					if (!bRightKeyDown && !bLeftKeyDown)
-					{
-					stopAnimation();
-					}
-					} ;
-				}else if(event.keyCode == '68' || event.keyCode =='39'){ //RIGHT & D
-					bRightKeyDown = state;
-					if (state) { 
-					startAnimation();
-					}
-					else
-					{
-					if (!bDownKeyDown && !bUpKeyDown)
-					{
-					stopAnimation();
-					}
-					} ;
-					
-				}else if(event.keyCode == '83' || event.keyCode =='40'){ //DOWN & S
-					bDownKeyDown = state;
-					if (state) { 
-					startAnimation();
-					}
-					else
-					{
-					if (!bRightKeyDown && !bLeftKeyDown)
-					{
-					stopAnimation();
-					}
-					} ;
-				}else if(event.keyCode == '65' || event.keyCode =='37'){ //Left & A
-					bLeftKeyDown = state;
-					if (state) { 
-					startAnimation();
-					}
-					else
-					{
-					if (!bDownKeyDown && !bUpKeyDown)
-					{
-					stopAnimation();
-					}
-					} ;
-			}
-        }
-		
-		$(document).ready(function(){
-			google.earth.createInstance("map3d", initCallback, failureCallback);
-			   
-			//setTimeout(server_update,250);
-			$(document).keydown(function(event){foo(event,true);});	
-			$(document).keyup(function(event){foo(event,false);});	 			
-		});	
-    </script>
-</head>
-<body style="height: 100%; width: 100%;">
-    <div id='map3d' style='z-index: 1; border: 1px solid silver; height: 80%; width: 80%;
+                return [
+                180 / Math.PI * lat2, 180 / Math.PI * (lng + Math.atan2(Math.sin(heading) * Math.sin(dist) * Math.cos(lat2), Math.cos(dist) - Math.sin(lat) * Math.sin(lat2)))];
+            }
+
+            function foo(event, state) {
+                if (event.keyCode == '87' || event.keyCode == '38') { //UP & W
+                    bUpKeyDown = state;
+                    if (state) {
+                        startAnimation();
+                    }
+                    else {
+                        if (!bRightKeyDown && !bLeftKeyDown) {
+                            stopAnimation();
+                        }
+                    };
+                } else if (event.keyCode == '68' || event.keyCode == '39') { //RIGHT & D
+                    bRightKeyDown = state;
+                    if (state) {
+                        startAnimation();
+                    }
+                    else {
+                        if (!bDownKeyDown && !bUpKeyDown) {
+                            stopAnimation();
+                        }
+                    };
+
+                } else if (event.keyCode == '83' || event.keyCode == '40') { //DOWN & S
+                    bDownKeyDown = state;
+                    if (state) {
+                        startAnimation();
+                    }
+                    else {
+                        if (!bRightKeyDown && !bLeftKeyDown) {
+                            stopAnimation();
+                        }
+                    };
+                } else if (event.keyCode == '65' || event.keyCode == '37') { //Left & A
+                    bLeftKeyDown = state;
+                    if (state) {
+                        startAnimation();
+                    }
+                    else {
+                        if (!bDownKeyDown && !bUpKeyDown) {
+                            stopAnimation();
+                        }
+                    };
+                }
+            }
+
+            $(document).ready(function() {
+                google.earth.createInstance("map3d", initCallback, failureCallback);
+
+                setTimeout(server_update,250);
+                $(document).keydown(function(event) {
+                    foo(event, true);
+                });
+                $(document).keyup(function(event) {
+                    foo(event, false);
+                });
+            });
+        </script>
+    </head>
+    
+    <body style="height: 100%; width: 100%;">
+        <div id='map3d' style='z-index: 1; border: 1px solid silver; height: 80%; width: 80%;
         position: relative;'>
-    </div>
-</body>
+        </div>
+    </body>
+
 </html>
