@@ -8,6 +8,7 @@
         </script>
         <script type='text/javascript'>
             var ge;
+            var model;
             google.load("earth", "1");
             var mplat = 61.2;
             var previous_data = {};
@@ -108,20 +109,22 @@
                 ge.getWindow().setVisibility(true);
 
                 ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
-                ge.getOptions().setMouseNavigationEnabled(false);
+                ge.getOptions().setMouseNavigationEnabled(true);
 
 
 
                 var initCam = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);
                 initCam.setAltitude(ANIM_ALTITUDE);
-                initCam.setLatitude(40.759);
-                initCam.setLongitude(-73.9849);
-                initCam.setHeading(0);
+                initCam.setLatitude(me.lat);
+                initCam.setLongitude(me.lon);
+                initCam.setHeading(me.heading);
 
                 initCam.setTilt(80);
                 initCam.setRoll(0);
 
                 ge.getView().setAbstractView(initCam);
+                
+                createPlayer('1', 40.759, -73.9849, 'http://www.ricardocunha.com/car.dae');
             }
 
             function startAnimation() {
@@ -177,12 +180,14 @@
                 if (bDownKeyDown) {
                     dist = 0 - dist;
                 }
+                
+           		var dest = destination(me.lat, me.lon, dist, me.heading);
+                moveModel(dest[0] , dest[1], 0);
+                me.lat = dest[0];
+                me.lon = dest[1];
 
-                var dest = destination(camera.getLatitude(), camera.getLongitude(), dist, me.heading);
-
-
-                me.move(dest[0], dest[1], me.heading);
-
+                dest = destination(me.lat, me.lon, dist-20, me.heading);
+                
                 camera.setAltitude(ANIM_ALTITUDE);
                 camera.setLatitude(dest[0]);
                 camera.setLongitude(dest[1]);
@@ -190,6 +195,8 @@
 
                 camera.setTilt(80);
                 camera.setRoll(0);
+
+
 
                 ge.getView().setAbstractView(camera);
             }
@@ -203,14 +210,8 @@
                 return 6371000 * Math.acos(a + b);
             }
 
-            function fix360(x) {
-                if (x > 360) {
-                    return [x - 360];
-                }
-                if (x < 0) {
-                    return [x + 360];
-                }
-                else return [x];
+            function fix360(angle) {
+                return angle%360;
 
             }
 
@@ -270,10 +271,64 @@
                     };
                 }
             }
+            
+            
+           function createPlayer(id, latitude, longitude, dae) {
+            // Create a 3D model, initialize it from a Collada file, and place it
+            // in the world.
+
+            var placemark = ge.createPlacemark('');
+            placemark.setName(id);
+            model = ge.createModel('');
+            ge.getFeatures().appendChild(placemark);
+            var loc = ge.createLocation('');
+            model.setLocation(loc);
+            var link = ge.createLink('');
+
+            //set scale of model
+            var scale = model.getScale();
+            scale.setX(0.5);
+            scale.setY(0.5);
+            scale.setZ(0.5);
+            model.setScale(scale)
+
+            // A textured model created in Sketchup and exported as Collada.
+            link.setHref(dae);
+            model.setLink(link);
+
+            //orientation
+            var ori = ge.createOrientation('');
+            ori.setRoll(0);
+            ori.setHeading(fix360(me.heading+270));
+            ori.setTilt(0);
+            model.setOrientation(ori);
+
+            loc.setLatitude(latitude);
+            loc.setLongitude(longitude);
+            placemark.setGeometry(model);
+        }
+        
+      function moveModel(temp1, temp2, alt) {
+            var loc = ge.createLocation('');
+            loc.setLatLngAlt(temp1, temp2, alt)
+            
+            //orientation
+            var ori = ge.createOrientation('');
+            ori.setRoll(0);
+            ori.setHeading(fix360(me.heading+270));
+            ori.setTilt(0);
+            model.setOrientation(ori);
+            
+            model.setLocation(loc);
+        }
+        
 
             $(document).ready(function() {
                 google.earth.createInstance("map3d", initCallback, failureCallback);
-
+                
+                //createPlayer('me', me.lat, me.lon, dae)
+				//createPlayer('1', 40.759, -73.9849, 'http://www.ricardocunha.com/car.dae');
+               
                 setTimeout(server_update,250);
                 $(document).keydown(function(event) {
                     foo(event, true);
