@@ -1,8 +1,6 @@
 import cgi
 import os
 import import_wrapper
-import geo.geomodel
-import geo.geotypes
 import random
 
 from google.appengine.ext.webapp import template
@@ -91,13 +89,6 @@ class play(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.out.write(template.render(path, template_values))
 
-class Guestbook(webapp.RequestHandler):
-    def post(self):
-        current_user = User(lat=40.745193,lon=73.903926, heading=0)
-        if users.get_current_user():
-            current_user.username = users.get_current_user()
-        current_user.put()
-
 class update(webapp.RequestHandler):
     def post(self):  
           
@@ -126,7 +117,6 @@ class update(webapp.RequestHandler):
 
 application = webapp.WSGIApplication(
                                     [('/',MainPage),
-                                     ('/sign',Guestbook),
                                      ('/update',update),
                                      ('/play',play)],
                                     debug=True)
