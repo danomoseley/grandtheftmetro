@@ -11,7 +11,7 @@ handlers:
   static_dir: js
 
 - url: /.*
-  script: helloworld.py
+  script: handler.py
   
 builtins:
 - datastore_admin: on
