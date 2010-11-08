@@ -133,6 +133,8 @@ class update(webapp.RequestHandler):
             current_user.put()
          
         results = User.all()
+        results.filter("__key__ != ", db.Key(self.request.get('session')))
+        
         
         public_attrs = User.public_attributes()  
         results_obj = [
