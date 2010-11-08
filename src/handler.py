@@ -86,7 +86,7 @@ class play(webapp.RequestHandler):
         'start_heading':current_user.heading,
         }
 
-        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        path = os.path.join(os.path.dirname(__file__), 'game.html')
         self.response.out.write(template.render(path, template_values))
 
 class update(webapp.RequestHandler):
