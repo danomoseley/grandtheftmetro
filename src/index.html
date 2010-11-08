@@ -65,11 +65,10 @@
         		}
             	
                  	           	
-            	
-                $('#dvSpeed').html('Speed: ' + WALK_SPEED + ' MPH');
                 WALK_SPEED = 1/100 * GAS_COUNT;
                  
-                $('#dvSpeed').html(Math.round( GAS_COUNT ));
+                //$('#dvSpeed').html('Speed: ' +Math.round( GAS_COUNT ) + ' MPH');
+                parent.document.getElementById("dvSpeed").innerHTML = 'Speed: ' +Math.round( GAS_COUNT ) + ' MPH';
             }
             
              
@@ -371,7 +370,7 @@
             	  disableDefaultUI: true,
             	  mapTypeId: google.maps.MapTypeId.ROADMAP
             	};
-            	map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+            	map = new google.maps.Map(parent.document.getElementById("map_canvas"), myOptions);
             	
             	marker = new google.maps.Marker({
             	      position: myLatlng, 
@@ -391,8 +390,12 @@
     </head>
     
     <body style="height: 100%; width: 100%;">
-    <iframe src="game.html"></iframe>
-
+        <div id='map3d' style='z-index: 1; border: 1px solid silver; height: 80%; width: 80%;
+        position: relative;'>
+        </div>       
+        
+        
+<div style="clear: both;"></div>
 <script type="text/javascript"><!--
 google_ad_client = "pub-3769436149950666";
 /* GMT2 */
