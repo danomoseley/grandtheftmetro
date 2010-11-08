@@ -24,7 +24,7 @@ class User(db.Model):
     def public_attributes():
         """Returns a set of simple attributes on public school entities."""
         return [
-            'username', 'session'
+            'session'
         ]
         
            
@@ -70,42 +70,6 @@ class MainPage(webapp.RequestHandler):
         template_values = {}    
         path = os.path.join(os.path.dirname(__file__), 'frame.html')
         self.response.out.write(template.render(path, template_values))
-
-
-class Play(webapp.RequestHandler):
-    def get(self): 
-        user = users.get_current_user()
-
-        if user:
-            query = User.all()
-            query.filter("username =", users.get_current_user())
-            
-            if query.count() == 0:
-                current_user = User(lat=40.745193,lon=-73.903926, heading=0)
-                current_user.username = users.get_current_user()
-                current_user.put()
-                template_values = {
-                                       'session': current_user.key(),
-                                       'start_lat':current_user.lat,
-                                       'start_lon':current_user.lon,
-                                       'start_heading':current_user.heading,
-                                       }    
-                path = os.path.join(os.path.dirname(__file__), 'index.html')
-                self.response.out.write(template.render(path, template_values))
-            else:
-                for current_user in query:   
-                    template_values = {
-                                       'session': current_user.key(),
-                                       'start_lat':current_user.lat,
-                                       'start_lon':current_user.lon,
-                                       'start_heading':current_user.heading,
-                                       }
-    
-                    path = os.path.join(os.path.dirname(__file__), 'index.html')
-                    self.response.out.write(template.render(path, template_values))
-        else:
-            self.redirect(users.create_login_url(self.request.uri))
-
 
 class Play(webapp.RequestHandler):
     def get(self): 
@@ -159,7 +123,7 @@ class play(webapp.RequestHandler):
         self.response.out.write(template.render(path, template_values))
 
 class update(webapp.RequestHandler):
-    def post(self):  
+    def get(self):  
           
         if self.request.get('lat'):
             current_user = db.get(self.request.get('session'))   
@@ -172,13 +136,12 @@ class update(webapp.RequestHandler):
         
         public_attrs = User.public_attributes()  
         results_obj = [
-          _merge_dicts({
+          {
             'lat': result.lat,
             'lon': result.lon,
             'heading': result.heading,
-            },
-            dict([(attr, getattr(result, attr))
-                  for attr in public_attrs]))
+            'session': result.key()
+            }
           for result in results]
         self.response.out.write(json.dumps({
         'users': results_obj

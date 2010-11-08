@@ -98,21 +98,19 @@
                     timer_active = 0;
                     inactive_timer = 0;
                     me.changed = false;
-                    $.ajax({
-                        url: "/update",
-                        type: "POST",
-                        data: ({
-                            lat: me.lat,
-                            lon: me.lon,
-                            heading: me.heading,
-                            session: me.sess
-                        }),
-                        dataType: "json",
-                        success: function(data) {
-                            //alert(data.users[0].username);
-                            setTimeout(server_update, 250);
-                        }
-                    })
+                    $.getJSON("/update",
+                    		{
+		                        lat: me.lat,
+		                        lon: me.lon,
+		                        heading: me.heading,
+		                        session: me.sess
+		                    },
+                    		  function(data) {
+		                    	$.each(data.users, function(i,item){
+		                            //alert(item.lat);
+		                            });
+		                    	setTimeout(server_update, 250);
+                    		  });
                 }else{                	
                 	setTimeout(server_update, 250);
                 }
