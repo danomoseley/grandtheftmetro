@@ -140,7 +140,7 @@ class update(webapp.RequestHandler):
             'lat': result.lat,
             'lon': result.lon,
             'heading': result.heading,
-            'session': result.key()
+            'session': str(result.key())
             }
           for result in results]
         self.response.out.write(json.dumps({
