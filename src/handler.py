@@ -67,12 +67,81 @@ def _merge_dicts(*args):
 
 class MainPage(webapp.RequestHandler):
     def get(self): 
-        current_user = User(lat=40.745193,lon=-73.903926, heading=0)
-        if users.get_current_user():
-            current_user.username = users.get_current_user()
-        current_user.put()
-        
-        self.redirect('/play?s='+str(current_user.key()))        
+        template_values = {}    
+        path = os.path.join(os.path.dirname(__file__), 'frame.html')
+        self.response.out.write(template.render(path, template_values))
+
+
+class Play(webapp.RequestHandler):
+    def get(self): 
+        user = users.get_current_user()
+
+        if user:
+            query = User.all()
+            query.filter("username =", users.get_current_user())
+            
+            if query.count() == 0:
+                current_user = User(lat=40.745193,lon=-73.903926, heading=0)
+                current_user.username = users.get_current_user()
+                current_user.put()
+                template_values = {
+                                       'session': current_user.key(),
+                                       'start_lat':current_user.lat,
+                                       'start_lon':current_user.lon,
+                                       'start_heading':current_user.heading,
+                                       }    
+                path = os.path.join(os.path.dirname(__file__), 'index.html')
+                self.response.out.write(template.render(path, template_values))
+            else:
+                for current_user in query:   
+                    template_values = {
+                                       'session': current_user.key(),
+                                       'start_lat':current_user.lat,
+                                       'start_lon':current_user.lon,
+                                       'start_heading':current_user.heading,
+                                       }
+    
+                    path = os.path.join(os.path.dirname(__file__), 'index.html')
+                    self.response.out.write(template.render(path, template_values))
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+
+
+class Play(webapp.RequestHandler):
+    def get(self): 
+        user = users.get_current_user()
+
+        if user:
+            query = User.all()
+            query.filter("username =", users.get_current_user())
+            
+            if query.count() == 0:
+                current_user = User(lat=40.745193,lon=-73.903926, heading=0)
+                current_user.username = users.get_current_user()
+                current_user.put()
+                template_values = {
+                                       'session': current_user.key(),
+                                       'start_lat':current_user.lat,
+                                       'start_lon':current_user.lon,
+                                       'start_heading':current_user.heading,
+                                       }    
+                path = os.path.join(os.path.dirname(__file__), 'index.html')
+                self.response.out.write(template.render(path, template_values))
+            else:
+                for current_user in query:   
+                    template_values = {
+                                       'session': current_user.key(),
+                                       'start_lat':current_user.lat,
+                                       'start_lon':current_user.lon,
+                                       'start_heading':current_user.heading,
+                                       }
+    
+                    path = os.path.join(os.path.dirname(__file__), 'index.html')
+                    self.response.out.write(template.render(path, template_values))
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+            
+              
         
         
 class play(webapp.RequestHandler):
@@ -118,7 +187,7 @@ class update(webapp.RequestHandler):
 application = webapp.WSGIApplication(
                                     [('/',MainPage),
                                      ('/update',update),
-                                     ('/play',play)],
+                                     ('/play',Play)],
                                     debug=True)
 
 def main():
