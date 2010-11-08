@@ -34,6 +34,9 @@
             var WALK_SPEED = 1;
             var TURBO_SPEED = 2;
             var GAS_COUNT = 0;
+            var lastDirBack = false;
+            
+            var World = new Array();
 
             function failureCallback(object) {}
 
@@ -69,6 +72,7 @@
                  
                 //$('#dvSpeed').html('Speed: ' +Math.round( GAS_COUNT ) + ' MPH');
                 parent.document.getElementById("dvSpeed").innerHTML = 'Speed: ' +Math.round( GAS_COUNT ) + ' MPH';
+                parent.document.getElementById("dvHeading").innerHTML = 'Heading: ' +me.heading + ' MPH';
             }
             
              
@@ -108,6 +112,20 @@
                     		  function(data) {
 		                    	$.each(data.users, function(i,item){
 		                            //alert(item.lat);
+
+		                            if(World[item.session]){
+		                            	World[item.session].lat = item.lat;
+		                            	World[item.session].lon = item.lon;
+		                            	World[item.session].heading = item.heading;
+		                            	
+		                            	movemodel(World[item.session] , item.lat, item.lon, alt)
+		                            }
+		                            else
+		                            	{ 
+		                            		World[item.session]  =  createPlayer('xxx', item.lat, item.lon, 'http://www.ricardocunha.com/car.dae');
+		                            	}
+		                            
+		                            
 		                            });
 		                    	me.changed = false;
 		                    	setTimeout(server_update, 250);
@@ -175,10 +193,10 @@
 
                 if (bRightKeyDown) {
                     if (bDownKeyDown) {
-                        me.heading = me.heading - TURN_DEGREES;
+                        me.heading = fix360(me.heading - TURN_DEGREES);
                     }
                     else {
-                        me.heading = me.heading + TURN_DEGREES;
+                        me.heading = fix360(me.heading + TURN_DEGREES);
                     }
 
 
@@ -189,10 +207,10 @@
 
                 if (bLeftKeyDown) {
                     if (bDownKeyDown) {
-                        me.heading = me.heading + TURN_DEGREES;
+                        me.heading = fix360(me.heading + TURN_DEGREES);
                     }
                     else {
-                        me.heading = me.heading - TURN_DEGREES;
+                        me.heading = fix360(me.heading - TURN_DEGREES);
                     }
 
                     if (!bDownKeyDown && !bUpKeyDown) {
@@ -201,13 +219,13 @@
                 }
 
                 GAS_COUNT = GAS_COUNT+1;
-                if (bDownKeyDown) {
+                if (bDownKeyDown || lastDirBack) {
                     dist = 0 - dist;
                     GAS_COUNT = GAS_COUNT+3;
                 }
                 
            		var dest = destination(me.lat, me.lon, dist, me.heading);
-                moveModel(dest[0] , dest[1], 0);
+                moveModel(model,dest[0] , dest[1], 0);
                 updateSpeed();
                 
                 me.lat = dest[0];
@@ -242,9 +260,14 @@
             }
 
             function fix360(angle) {
-                return Math.abs(angle%360);
-
-            }
+            	if (angle > 360){ 
+            		return angle-360;
+            		}
+            	if (angle < 0 ) {
+            		return angle+360;
+            		}
+                return angle;
+                }
 
 
             function destination(lat, lng, dist, heading) {
@@ -263,6 +286,7 @@
                     bUpKeyDown = state;
                     if (state) {
                         startAnimation();
+                        lastDirBack = false;
                     }
                     else {
                         if (!bRightKeyDown && !bLeftKeyDown) {
@@ -286,6 +310,7 @@
                     bDownKeyDown = state;
                     if (state) {
                         startAnimation();
+                        lastDirBack = true;
                     }
                     else {
                         if (!bRightKeyDown && !bLeftKeyDown) {
@@ -345,9 +370,11 @@
             loc.setLatitude(latitude);
             loc.setLongitude(longitude);
             placemark.setGeometry(model);
+            
+            return placemark;
         }
         
-      function moveModel(temp1, temp2, alt) {
+      function moveModel(thisModel , temp1, temp2, alt) {
             var loc = ge.createLocation('');
             loc.setLatLngAlt(temp1, temp2, alt)
             
@@ -356,9 +383,9 @@
             ori.setRoll(0);
             ori.setHeading(fix360(me.heading+270));
             ori.setTilt(0);
-            model.setOrientation(ori);
+            thisModel.setOrientation(ori);
             
-            model.setLocation(loc);
+            thisModel.setLocation(loc);
         }
          
             $(document).ready(function() {
