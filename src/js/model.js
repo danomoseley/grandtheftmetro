@@ -63,7 +63,6 @@ function Model (ge,session,lat,lon,heading,speed) {
         this.model.setOrientation(ori);
         
         this.model.setLocation(loc);
-        updateSpeed();
         
         this.lat = dest[0];
         this.lon = dest[1];
@@ -81,7 +80,7 @@ function Model (ge,session,lat,lon,heading,speed) {
 	        // orientation
 	        var ori = ge.createOrientation('');
 	        ori.setRoll(0);
-	        ori.setHeading(fix360(this.heading+270));
+	        ori.setHeading(fix360(movePoint.heading+270));
 	        ori.setTilt(0);
 	        this.model.setOrientation(ori);
 	        
@@ -108,7 +107,6 @@ function Model (ge,session,lat,lon,heading,speed) {
         	var loc = ge.createLocation('');
             loc.setLatLngAlt(lat, lon, 0)
             this.model.setLocation(loc);
-            updateSpeed();
             
             this.lat = lat;
             this.lon = lon;
@@ -118,17 +116,14 @@ function Model (ge,session,lat,lon,heading,speed) {
     };
     
     this.fillFrames = function(){
-    	var stepsize = 1/8;  
-    	var N = 3;  
+    	var stepsize = 1/27;
     	for (var u = 0; u <= 1; u += stepsize) {  
-            x = y = 0;  
-            $.each(this.pointQueue, function(k,item){
-                var blend = (factorial(N) / (factorial(k) * factorial(N - k))) * Math.pow(u, k) * Math.pow(1 -  u, N - k);  
-                x += item.lat * blend;  
-                y += item.lon * blend;  
-            })
-            this.buffer.push(new Point(x,y));
+            this.buffer.push(getBezier(u,this.pointQueue[3],this.pointQueue[2],this.pointQueue[1],this.pointQueue[0]));
         }
+    	//for(var i=1;i<this.pointQueue.length;i++){
+    	//	this.pointQueue.shift();
+    	//}
+    	
     	this.pointQueue = new Array();
     }
     
@@ -166,3 +161,16 @@ function factorial(x) {
 		return x*factorial(x-1);
 	}
 }  
+
+function B1(t) { return t*t*t }
+function B2(t) { return 3*t*t*(1-t) }
+function B3(t) { return 3*t*(1-t)*(1-t) }
+function B4(t) { return (1-t)*(1-t)*(1-t) }
+
+function getBezier(percent,C1,C2,C3,C4) {
+	  var pos = new Point();
+	  pos.lat = C1.lat*B1(percent) + C2.lat*B2(percent) + C3.lat*B3(percent) + C4.lat*B4(percent);
+	  pos.lon = C1.lon*B1(percent) + C2.lon*B2(percent) + C3.lon*B3(percent) + C4.lon*B4(percent);
+	  pos.heading = (C1.heading + C2.heading + C3.heading + C4.heading)/5;
+	  return pos;
+	}

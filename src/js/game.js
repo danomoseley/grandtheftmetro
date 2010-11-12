@@ -24,9 +24,10 @@ var lastDirBack = false;
 var World = new Array();
 var sessions = new Array();
 
-function Point(lat, lng) { 
+function Point(lat, lng, heading) { 
     this.lat = lat; 
     this.lon = lng; 
+    this.heading = heading;
 } 
 
 
@@ -38,36 +39,6 @@ function timer() {
         setTimeout(timer, 1000);
     }
 }
-            
-function updateSpeed()
-{
-	if (bUpKeyDown || bDownKeyDown)
-	{
-		GAS_COUNT = GAS_COUNT + 1;
-	}
-	else
-		{
-    		GAS_COUNT = GAS_COUNT - 5;
-		}
-	
-	if (GAS_COUNT >= 100)
-	{
-		GAS_COUNT = 100;
-	}
-	else if (GAS_COUNT < 0)
-	{
-		GAS_COUNT = 0;
-	}
-	
-     	           	
-    WALK_SPEED = 1/100 * GAS_COUNT;
-     
-    // $('#dvSpeed').html('Speed: ' +Math.round( GAS_COUNT ) + '
-	// MPH');
-    parent.document.getElementById("dvSpeed").innerHTML = 'Speed: ' +Math.round( GAS_COUNT ) + ' MPH';
-    parent.document.getElementById("dvHeading").innerHTML = 'Heading: ' +player.heading + ' MPH';
-}
-
 var player;
 
 function server_update() {
@@ -87,8 +58,8 @@ function server_update() {
 
                         if(sessions.indexOf(item.session) != -1){
                         	
-                        	World[item.session].pointQueue.push(new Point(item.lat, item.lon))
-                        	if(World[item.session].pointQueue.length>=3){
+                        	World[item.session].pointQueue.push(new Point(item.lat, item.lon, item.heading))
+                        	if(World[item.session].pointQueue.length>=4){
                         		World[item.session].fillFrames()
                         	}
                         }
@@ -132,6 +103,7 @@ function initCallback(object) {
     
     setTimeout(server_update,250);
     setTimeout(runEngine,25);
+    startAnimation();
     //createPlayer('1', 40.759, -73.9849, 'http://www.ricardocunha.com/car.dae');
 }
 
@@ -148,16 +120,6 @@ function startAnimation() {
 }
 
 function runEngine(){
-	var dist;
-    
-    if (bSpaceKeyDown)
-    {
-    	dist = TURBO_SPEED;
-    }
-    else
-    { 
-    	dist = WALK_SPEED;
-    } 
 
     if (bRightKeyDown) {
         if (bDownKeyDown) {
@@ -165,11 +127,6 @@ function runEngine(){
         }
         else {
         	player.heading = fix360(player.heading + TURN_DEGREES);
-        }
-
-
-        if (!bDownKeyDown && !bUpKeyDown) {
-            dist = 0;
         }
     }
 
@@ -180,20 +137,28 @@ function runEngine(){
         else {
         	player.heading = fix360(player.heading - TURN_DEGREES);
         }
-
-        if (!bDownKeyDown && !bUpKeyDown) {
-            dist = 0;
-        }
     }
 
-    GAS_COUNT = GAS_COUNT+1;
-    if (bDownKeyDown || lastDirBack) {
-        dist = 0 - dist;
-        GAS_COUNT = GAS_COUNT+3;
+    
+    if (bUpKeyDown && GAS_COUNT<100) {
+        GAS_COUNT = GAS_COUNT+1;
+    }else if (bDownKeyDown && GAS_COUNT>0) {
+        GAS_COUNT = GAS_COUNT-5;
+    }else if(GAS_COUNT>100){
+    	GAS_COUNT=100;
+    }else if(GAS_COUNT>0){
+    	GAS_COUNT = GAS_COUNT-3;
+    }else if(GAS_COUNT<0){
+    	GAS_COUNT = 0;
     }
+    WALK_SPEED = 1/100 * GAS_COUNT;
+    player.move(WALK_SPEED);
     
+    // $('#dvSpeed').html('Speed: ' +Math.round( GAS_COUNT ) + '
+	// MPH');
+    parent.document.getElementById("dvSpeed").innerHTML = 'Speed: ' +Math.round( GAS_COUNT ) + ' MPH';
+    parent.document.getElementById("dvHeading").innerHTML = 'Heading: ' +player.heading + ' MPH';
     
-	player.move(dist);
 	setTimeout(runEngine,25);
 }
 
@@ -270,54 +235,16 @@ function foo(event, state) {
 	if (event.keyCode == '87' || event.keyCode == '38') { // UP &
 															// W
         bUpKeyDown = state;
-        if (state) {
-            startAnimation();
-            lastDirBack = false;
-        }
-        else {
-            if (!bRightKeyDown && !bLeftKeyDown) {
-               // stopAnimation();
-                // GAS_COUNT = 0;
-                updateSpeed();
-            }
-        };
     } else if (event.keyCode == '68' || event.keyCode == '39') { // RIGHT
 																	// & D
         bRightKeyDown = state;
-        if (state) {
-            startAnimation();
-        }
-        else {
-            if (!bDownKeyDown && !bUpKeyDown) {
-                //stopAnimation();
-            }
-        };
 
     } else if (event.keyCode == '83' || event.keyCode == '40') { // DOWN
 																	// & S
         bDownKeyDown = state;
-        if (state) {
-            startAnimation();
-            lastDirBack = true;
-        }
-        else {
-            if (!bRightKeyDown && !bLeftKeyDown) {
-                // stopAnimation();
-                // GAS_COUNT = 0;
-                updateSpeed();
-            }
-        };
     } else if (event.keyCode == '65' || event.keyCode == '37') { // Left
 																	// & A
         bLeftKeyDown = state;
-        if (state) {
-            startAnimation();
-        }
-        else {
-            if (!bDownKeyDown && !bUpKeyDown) {
-                // stopAnimation();
-            }
-        };
     }
     else if (event.keyCode == '32') { // Space
     	event.preventDefault();
