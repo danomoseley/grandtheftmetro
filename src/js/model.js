@@ -124,7 +124,9 @@ function Model (ge,session,lat,lon,heading,speed) {
     	//	this.pointQueue.shift();
     	//}
     	
-    	this.pointQueue = new Array();
+		//THIS WORKS
+    	//this.pointQueue = new Array();
+		this.pointQueue = new Array(this.pointQueue[this.pointQueue.length-1]);
     }
     
     this.stop = function(lat,lon,alt) {
