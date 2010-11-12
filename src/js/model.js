@@ -71,7 +71,7 @@ function Model (ge,session,lat,lon,heading,speed) {
         this.queue = 0;
     }
     
-    this.animate2 = function(){  
+    this.animate2 = function(){
     	if(this.buffer.length>0){
 	    	var movePoint = this.buffer.shift();
 	        var loc = ge.createLocation('');
@@ -116,7 +116,7 @@ function Model (ge,session,lat,lon,heading,speed) {
     };
     
     this.fillFrames = function(){
-    	var stepsize = 1/27;
+    	var stepsize = 1/(FRAME_RATE*((LATENCY+UPDATE_FREQUENCY)*4)/1000);
     	for (var u = 0; u <= 1; u += stepsize) {  
             this.buffer.push(getBezier(u,this.pointQueue[3],this.pointQueue[2],this.pointQueue[1],this.pointQueue[0]));
         }
@@ -171,6 +171,6 @@ function getBezier(percent,C1,C2,C3,C4) {
 	  var pos = new Point();
 	  pos.lat = C1.lat*B1(percent) + C2.lat*B2(percent) + C3.lat*B3(percent) + C4.lat*B4(percent);
 	  pos.lon = C1.lon*B1(percent) + C2.lon*B2(percent) + C3.lon*B3(percent) + C4.lon*B4(percent);
-	  pos.heading = (C1.heading + C2.heading + C3.heading + C4.heading)/5;
+	  pos.heading = C1.heading*B1(percent) + C2.heading*B2(percent) + C3.heading*B3(percent) + C4.heading*B4(percent);
 	  return pos;
 	}

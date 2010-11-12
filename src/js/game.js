@@ -20,6 +20,11 @@ var WALK_SPEED = 1;
 var TURBO_SPEED = 2;
 var GAS_COUNT = 0;
 var lastDirBack = false;
+var LATENCY = 0;
+var last_sent;
+var UPDATE_FREQUENCY = 100;
+var FRAME_RATE = 0;
+var FRAME_COUNTER = 0;
 
 var World = new Array();
 var sessions = new Array();
@@ -39,12 +44,22 @@ function timer() {
         setTimeout(timer, 1000);
     }
 }
+
+function frameRate(){
+	FRAME_RATE = FRAME_COUNTER;
+	FRAME_COUNTER = 0;
+	setTimeout(frameRate, 1000);
+	parent.document.getElementById("dvFrameRate").innerHTML = FRAME_RATE + ' FPS';
+}
 var player;
 
 function server_update() {
     if (player.changed) {
         timer_active = 0;
         inactive_timer = 0;
+        last_sent = new Date().getTime();
+
+        
         $.getJSON("/update",
         		{
                     lat: player.lat,
@@ -53,24 +68,30 @@ function server_update() {
                     session: player.session
                 },
         		  function(data) {
+                	LATENCY = new Date().getTime() - last_sent;
                 	$.each(data.users, function(i,item){
                         // alert(item.lat);
 
-                        if(sessions.indexOf(item.session) != -1){
-                        	
-                        	World[item.session].pointQueue.push(new Point(item.lat, item.lon, item.heading))
-                        	if(World[item.session].pointQueue.length>=4){
-                        		World[item.session].fillFrames()
-                        	}
+                        if(sessions.indexOf(item.session) != -1){                        	
+                        	if(World[item.session].pointQueue.length>0){
+                        		if(World[item.session].pointQueue[World[item.session].pointQueue.length-1].lat != item.lat && World[item.session].pointQueue[World[item.session].pointQueue.length-1].lon != item.lon){
+                        			World[item.session].pointQueue.push(new Point(item.lat, item.lon, item.heading))
+                                	if(World[item.session].pointQueue.length>=4){
+                                		World[item.session].fillFrames()
+                                	}    
+                        		}                            	                    		
+                        	}else{
+                        		World[item.session].pointQueue.push(new Point(item.lat, item.lon, item.heading))
+                        	}                      	
                         }
                         else                        	
-                        	{ 
-                        		World[item.session]  =  new Model(ge,item.session,item.lat,item.lon,item.heading,1);
-                        		
-                        	    sessions.push(item.session);  
-                        	}
+                    	{ 
+                    		World[item.session]  =  new Model(ge,item.session,item.lat,item.lon,item.heading,1);
+                    		
+                    	    sessions.push(item.session);  
+                    	}
                         });
-                	setTimeout(server_update, 250);
+                	setTimeout(server_update, UPDATE_FREQUENCY);
         		  });
     }else{                	
     	setTimeout(server_update, 250);
@@ -101,9 +122,10 @@ function initCallback(object) {
     player = new Model(ge,start_session,start_lat,start_lon,start_heading,1);
      
     
-    setTimeout(server_update,250);
+    setTimeout(server_update,UPDATE_FREQUENCY);
     setTimeout(runEngine,25);
     startAnimation();
+    setTimeout(frameRate, 10);
     //createPlayer('1', 40.759, -73.9849, 'http://www.ricardocunha.com/car.dae');
 }
 
@@ -151,7 +173,7 @@ function runEngine(){
     }else if(GAS_COUNT<0){
     	GAS_COUNT = 0;
     }
-    WALK_SPEED = 1/100 * GAS_COUNT;
+    WALK_SPEED = 1/100 * (GAS_COUNT*2);
     player.move(WALK_SPEED);
     
     // $('#dvSpeed').html('Speed: ' +Math.round( GAS_COUNT ) + '
@@ -170,7 +192,7 @@ function stopAnimation() {
 }
 
 function tickAnimation() {
-	
+	FRAME_COUNTER++;
     // an example of some camera manipulation that's possible w/ the
 	// Earth API
     var camera = ge.getView().copyAsCamera(ge.ALTITUDE_RELATIVE_TO_GROUND);
