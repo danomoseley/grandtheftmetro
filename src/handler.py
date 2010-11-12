@@ -59,17 +59,39 @@ class User(db.Model):
 
         self.location.lon = lon
 
-    longitude = property(_get_longitude, _set_longitude)\
+    longitude = property(_get_longitude, _set_longitude)
+
+class allowedUsers(db.Model):
+    username = db.StringProperty()
+
 
 def _merge_dicts(*args):
   """Merges dictionaries right to left. Has side effects for each argument."""
   return reduce(lambda d, s: d.update(s) or d, args)
 
 class MainPage(webapp.RequestHandler):
-    def get(self): 
-        template_values = {}    
-        path = os.path.join(os.path.dirname(__file__), 'frame.html')
-        self.response.out.write(template.render(path, template_values))
+    def get(self):         
+        user = users.get_current_user()
+        
+        
+
+        if user:
+            query = allowedUsers.all()
+            query.filter("username =", user.nickname())
+            if query.count() == 1:
+                template_values = {
+                                   'username': user.nickname()
+                                   }    
+                path = os.path.join(os.path.dirname(__file__), 'frame.html')
+                self.response.out.write(template.render(path, template_values))
+            else:
+                template_values = {
+                                   'username': user.nickname()
+                                   }    
+                path = os.path.join(os.path.dirname(__file__), 'deny.html')
+                self.response.out.write(template.render(path, template_values))
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
 
 class Play(webapp.RequestHandler):
     def get(self): 
@@ -126,14 +148,13 @@ class update(webapp.RequestHandler):
     def get(self):  
           
         if self.request.get('lat'):
-            current_user = db.get(self.request.get('session'))   
+            current_user = db.get(db.Key(self.request.get('session')))   
             current_user.lat = float(self.request.get('lat'))
             current_user.lon = float(self.request.get('lon'))
             current_user.heading = int(self.request.get('heading'))
             current_user.put()
          
-        results = User.all()
-        results.filter("__key__ != ", db.Key(self.request.get('session')))
+        results = db.GqlQuery("SELECT * FROM User WHERE __key__ != :1",db.Key(self.request.get('session')))
         
         
         public_attrs = User.public_attributes()  
